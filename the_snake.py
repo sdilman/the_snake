@@ -2,8 +2,6 @@ from random import randint
 
 from enum import Enum
 
-from typing import Tuple, Optional
-
 import pygame
 
 # Константы для размеров поля и сетки:
@@ -18,15 +16,6 @@ UP = (0, -1)
 DOWN = (0, 1)
 LEFT = (-1, 0)
 RIGHT = (1, 0)
-
-
-# Направления движения:
-class Direction(Enum):
-    UP = (0, -1)
-    DOWN = (0, 1)
-    LEFT = (-1, 0)
-    RIGHT = (1, 0)
-
 
 # Цвет фона - черный:
 BOARD_BACKGROUND_COLOR = (0, 0, 0)
@@ -84,7 +73,7 @@ class Snake(GameObject):
     def __init__(self,
                  length=1,
                  positions=[(GRID_WIDTH_CENTER, GRID_HEIGHT_CENTER)],
-                 direction=Direction.RIGHT,
+                 direction=RIGHT,
                  next_direction=None,
                  last=None,
                  dead_snake=None,
@@ -101,27 +90,26 @@ class Snake(GameObject):
         return self.positions[0]
 
     def get_field_ahead(self):
-        match self.direction:
-            case Direction.RIGHT:
-                return (
-                    (self.positions[0][0] + GRID_SIZE) % SCREEN_WIDTH,
-                    self.positions[0][1],
-                )
-            case Direction.DOWN:
-                return (
-                    self.positions[0][0],
-                    (self.positions[0][1] + GRID_SIZE) % SCREEN_HEIGHT,
-                )
-            case Direction.LEFT:
-                return (
-                    (self.positions[0][0] - GRID_SIZE) % SCREEN_WIDTH,
-                    self.positions[0][1],
-                )
-            case Direction.UP:
-                return (
-                    self.positions[0][0],
-                    (self.positions[0][1] - GRID_SIZE) % SCREEN_HEIGHT,
-                )
+        if self.direction == RIGHT:
+            return (
+                (self.positions[0][0] + GRID_SIZE) % SCREEN_WIDTH,
+                self.positions[0][1],
+            )
+        elif self.direction == DOWN:
+            return (
+                self.positions[0][0],
+                (self.positions[0][1] + GRID_SIZE) % SCREEN_HEIGHT,
+            )
+        elif self.direction == LEFT:
+            return (
+                (self.positions[0][0] - GRID_SIZE) % SCREEN_WIDTH,
+                self.positions[0][1],
+            )
+        elif self.direction == UP:
+            return (
+                self.positions[0][0],
+                (self.positions[0][1] - GRID_SIZE) % SCREEN_HEIGHT,
+            )
 
     def update_direction(self):
         if self.next_direction:
@@ -168,7 +156,7 @@ class Snake(GameObject):
         self.length = 1
         self.dead_snake = self.positions
         self.positions = [(GRID_WIDTH_CENTER, GRID_HEIGHT_CENTER)]
-        self.direction = Direction.RIGHT
+        self.direction = RIGHT
         self.next_direction = None
         self.last = None
 
@@ -179,14 +167,14 @@ def handle_keys(game_object):
             pygame.quit()
             raise SystemExit
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP and game_object.direction != Direction.DOWN:
-                game_object.next_direction = Direction.UP
-            elif event.key == pygame.K_DOWN and game_object.direction != Direction.UP:
-                game_object.next_direction = Direction.DOWN
-            elif event.key == pygame.K_LEFT and game_object.direction != Direction.RIGHT:
-                game_object.next_direction = Direction.LEFT
-            elif event.key == pygame.K_RIGHT and game_object.direction != Direction.LEFT:
-                game_object.next_direction = Direction.RIGHT
+            if event.key == pygame.K_UP and game_object.direction != DOWN:
+                game_object.next_direction = UP
+            elif event.key == pygame.K_DOWN and game_object.direction != UP:
+                game_object.next_direction = DOWN
+            elif event.key == pygame.K_LEFT and game_object.direction != RIGHT:
+                game_object.next_direction = LEFT
+            elif event.key == pygame.K_RIGHT and game_object.direction != LEFT:
+                game_object.next_direction = RIGHT
 
 
 def main():
