@@ -51,7 +51,7 @@ def _the_snake(snake_import_test):
         )
     for class_name in ('GameObject', 'Snake', 'Apple'):
         assert hasattr(the_snake, class_name), (
-            f'Убедитесь, что в модуле `the_snake` определен класс `{class_name}`.'
+            f'Убедитесь, что в модуле `the_snake` есть класс `{class_name}`.'
         )
     return the_snake
 

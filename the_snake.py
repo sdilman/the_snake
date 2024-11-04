@@ -1,9 +1,5 @@
 from random import randint
 
-from enum import Enum
-
-from typing import Tuple, Optional
-
 import pygame
 
 # Константы для размеров поля и сетки:
@@ -18,15 +14,6 @@ UP = (0, -1)
 DOWN = (0, 1)
 LEFT = (-1, 0)
 RIGHT = (1, 0)
-
-
-# Направления движения:
-class Direction(Enum):
-    UP = (0, -1)
-    DOWN = (0, 1)
-    LEFT = (-1, 0)
-    RIGHT = (1, 0)
-
 
 # Цвет фона - черный:
 BOARD_BACKGROUND_COLOR = (0, 0, 0)
@@ -55,36 +42,45 @@ clock = pygame.time.Clock()
 
 # Тут опишите все классы игры.
 class GameObject:
+    """Common root for game classes"""
+
     def __init__(self, position=None, body_color=(0, 0, 255)):
         self.position = position
         self.body_color = body_color
 
     def draw(self):
+        """Draw the game object (must be implemented in child classes)"""
         raise NotImplementedError
 
 
 class Apple(GameObject):
+    """Apple"""
+
     def __init__(self, body_color=(255, 0, 0)):
         _position = self.randomize_position()
         super().__init__(_position, body_color)
 
     def randomize_position(self):
+        """Returns random position on the field for apple"""
         return (
             randint(0, GRID_WIDTH - 1) * GRID_SIZE,
             randint(0, GRID_HEIGHT - 1) * GRID_SIZE
         )
 
     def draw(self):
+        """Draws apple on the field"""
         rect = pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(screen, self.body_color, rect)
         pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
 
 
 class Snake(GameObject):
+    """Snake"""
+
     def __init__(self,
                  length=1,
                  positions=[(GRID_WIDTH_CENTER, GRID_HEIGHT_CENTER)],
-                 direction=Direction.RIGHT,
+                 direction=RIGHT,
                  next_direction=None,
                  last=None,
                  dead_snake=None,
@@ -98,37 +94,40 @@ class Snake(GameObject):
         self.dead_snake = dead_snake
 
     def get_head_position(self):
+        """Get head position"""
         return self.positions[0]
 
     def get_field_ahead(self):
-        match self.direction:
-            case Direction.RIGHT:
-                return (
-                    (self.positions[0][0] + GRID_SIZE) % SCREEN_WIDTH,
-                    self.positions[0][1],
-                )
-            case Direction.DOWN:
-                return (
-                    self.positions[0][0],
-                    (self.positions[0][1] + GRID_SIZE) % SCREEN_HEIGHT,
-                )
-            case Direction.LEFT:
-                return (
-                    (self.positions[0][0] - GRID_SIZE) % SCREEN_WIDTH,
-                    self.positions[0][1],
-                )
-            case Direction.UP:
-                return (
-                    self.positions[0][0],
-                    (self.positions[0][1] - GRID_SIZE) % SCREEN_HEIGHT,
-                )
+        """Get position to be stepped into"""
+        if self.direction == RIGHT:
+            return (
+                (self.positions[0][0] + GRID_SIZE) % SCREEN_WIDTH,
+                self.positions[0][1],
+            )
+        elif self.direction == DOWN:
+            return (
+                self.positions[0][0],
+                (self.positions[0][1] + GRID_SIZE) % SCREEN_HEIGHT,
+            )
+        elif self.direction == LEFT:
+            return (
+                (self.positions[0][0] - GRID_SIZE) % SCREEN_WIDTH,
+                self.positions[0][1],
+            )
+        elif self.direction == UP:
+            return (
+                self.positions[0][0],
+                (self.positions[0][1] - GRID_SIZE) % SCREEN_HEIGHT,
+            )
 
     def update_direction(self):
+        """Update direction"""
         if self.next_direction:
             self.direction = self.next_direction
             self.next_direction = None
 
     def move(self, length_increase=False):
+        """Update structure accordingly to the one cell move"""
         new_head = self.get_field_ahead()
         new_positions = [new_head]
         new_positions.extend(self.positions)
@@ -139,6 +138,7 @@ class Snake(GameObject):
             self.last = None
 
     def draw(self):
+        """Draw he snake"""
         for position in self.positions[:-1]:
             rect = pygame.Rect(position, (GRID_SIZE, GRID_SIZE))
             pygame.draw.rect(screen, self.body_color, rect)
@@ -165,31 +165,34 @@ class Snake(GameObject):
                 pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, cell_rect)
 
     def reset(self):
+        """Kill the snake and create another"""
         self.length = 1
         self.dead_snake = self.positions
         self.positions = [(GRID_WIDTH_CENTER, GRID_HEIGHT_CENTER)]
-        self.direction = Direction.RIGHT
+        self.direction = RIGHT
         self.next_direction = None
         self.last = None
 
 
 def handle_keys(game_object):
+    """Handle keys"""
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             raise SystemExit
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP and game_object.direction != Direction.DOWN:
-                game_object.next_direction = Direction.UP
-            elif event.key == pygame.K_DOWN and game_object.direction != Direction.UP:
-                game_object.next_direction = Direction.DOWN
-            elif event.key == pygame.K_LEFT and game_object.direction != Direction.RIGHT:
-                game_object.next_direction = Direction.LEFT
-            elif event.key == pygame.K_RIGHT and game_object.direction != Direction.LEFT:
-                game_object.next_direction = Direction.RIGHT
+            if event.key == pygame.K_UP and game_object.direction != DOWN:
+                game_object.next_direction = UP
+            elif event.key == pygame.K_DOWN and game_object.direction != UP:
+                game_object.next_direction = DOWN
+            elif event.key == pygame.K_LEFT and game_object.direction != RIGHT:
+                game_object.next_direction = LEFT
+            elif event.key == pygame.K_RIGHT and game_object.direction != LEFT:
+                game_object.next_direction = RIGHT
 
 
 def main():
+    """Main method of the program"""
     # Инициализация PyGame:
     pygame.init()
     # Тут нужно создать экземпляры классов.
