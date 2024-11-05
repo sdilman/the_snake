@@ -95,7 +95,6 @@ class Snake(GameObject):
         self.direction = direction
         self.next_direction = None
         self.last = None
-        self.dead_snake = None
 
     def get_head_position(self):
         """Get head position."""
@@ -119,11 +118,11 @@ class Snake(GameObject):
             self.direction = self.next_direction
             self.next_direction = None
 
-    def move(self, length_increase=False):
+    def move(self):
         """Update structure accordingly to the one cell move."""
         new_head = self.get_field_ahead()
         self.positions.insert(0, new_head)
-        self.last = None if length_increase else self.positions.pop()
+        self.last = self.positions.pop()
 
     def draw(self):
         """Draw he snake."""
@@ -139,23 +138,20 @@ class Snake(GameObject):
         pg.draw.rect(screen, BORDER_COLOR, head_rect, 1)
 
         if self.last:
-            last_rect = pg.Rect(
-                self.last, (GRID_SIZE, GRID_SIZE))
-            pg.draw.rect(
-                screen, BOARD_BACKGROUND_COLOR, last_rect)
-
-        if self.dead_snake:
-            for cell in self.dead_snake:
-                cell_rect = pg.Rect(cell, (GRID_SIZE, GRID_SIZE))
-                pg.draw.rect(screen, BOARD_BACKGROUND_COLOR, cell_rect)
+            last_rect = pg.Rect(self.last, (GRID_SIZE, GRID_SIZE))
+            pg.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
 
     def reset(self):
         """Kill the snake and create another."""
-        self.dead_snake = self.positions
         self.positions = [(GRID_WIDTH_CENTER, GRID_HEIGHT_CENTER)]
         self.direction = choice([RIGHT, DOWN, LEFT, UP])
         self.next_direction = None
         self.last = None
+        self.draw_reset()
+
+    def draw_reset(self):
+        field = pg.Rect((0, 0), (SCREEN_WIDTH, SCREEN_HEIGHT))
+        pg.draw.rect(screen, BOARD_BACKGROUND_COLOR, field)
 
 
 def handle_keys(game_object):
@@ -185,16 +181,13 @@ def main():
         clock.tick(SPEED)
         handle_keys(snake)
         snake.update_direction()
-        eat_apple = (snake.get_field_ahead() == apple.position)
-        self_crash = (snake.get_field_ahead() in snake.positions)
-        if eat_apple:
-            snake.move(length_increase=True)
-            forbidden_cells = snake.positions + [apple.position]
-            apple.reset(forbidden_cells=forbidden_cells)
-        elif self_crash:
+        snake_tail = snake.positions[-1]
+        snake.move()
+        if snake.get_head_position() == apple.position:
+            snake.positions.append(snake_tail)
+            apple.reset(forbidden_cells=snake.positions)
+        elif snake.get_head_position() in snake.positions[1:]:
             snake.reset()
-        else:
-            snake.move(length_increase=False)
 
         apple.draw()
         snake.draw()
