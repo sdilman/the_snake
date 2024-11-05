@@ -5,7 +5,7 @@ Eat an apple, get an extra cell to the body.
 Hit your own body, the game starts from scratch.
 """
 
-from random import randint
+from random import randint, choice
 
 import pygame as pg
 
@@ -43,30 +43,34 @@ class GameObject:
 
     def draw(self):
         """Draw the game object, must be implemented in child classes."""
-        raise NotImplementedError
+        raise NotImplementedError('The method has to be implemented in a sub-class')
+    
+    def reset(self):
+        """Delete the existing object and create a new one."""
+        raise NotImplementedError('The method has to be implemented in a sub-class')
 
 
 class Apple(GameObject):
     """Game class Apple."""
 
-    def __init__(self, body_color=APPLE_COLOR, forbidden_cells=[]):
+    def __init__(self, body_color=APPLE_COLOR, forbidden_cells=None):
         """Create Apple object using input parameters."""
-        self.forbidden_cells = forbidden_cells
-        _position = self.randomize_position()
-        super().__init__(_position, body_color)
+        super().__init__(None, body_color)
+        self.randomize_position(forbidden_cells)
 
-    def randomize_position(self):
+    def randomize_position(self, forbidden_cells):
         """Return random position on the field for apple."""
+        _forbidden_cells = forbidden_cells if forbidden_cells else []
         cell_candidate = (
             randint(0, GRID_WIDTH - 1) * GRID_SIZE,
             randint(0, GRID_HEIGHT - 1) * GRID_SIZE
         )
-        while cell_candidate in self.forbidden_cells:
+        while cell_candidate in _forbidden_cells:
             cell_candidate = (
                 randint(0, GRID_WIDTH - 1) * GRID_SIZE,
                 randint(0, GRID_HEIGHT - 1) * GRID_SIZE
             )
-        return cell_candidate
+        self.position = cell_candidate
 
     def draw(self):
         """Draw apple on the field."""
@@ -74,26 +78,24 @@ class Apple(GameObject):
         pg.draw.rect(screen, self.body_color, rect)
         pg.draw.rect(screen, BORDER_COLOR, rect, 1)
 
+    def reset(self, forbidden_cells=None):
+        """Delete the apple and create another."""
+        self.randomize_position(forbidden_cells=forbidden_cells)
+
 
 class Snake(GameObject):
     """Game class Snake."""
 
     def __init__(self,
-                 length=1,
-                 positions=[(GRID_WIDTH_CENTER, GRID_HEIGHT_CENTER)],
                  direction=RIGHT,
-                 next_direction=None,
-                 last=None,
-                 dead_snake=None,
                  body_color=SNAKE_COLOR):
         """Create Snake object using input parameters."""
-        super().__init__(positions[0], body_color)
-        self.length = length
-        self.positions = positions
+        super().__init__((GRID_WIDTH_CENTER, GRID_HEIGHT_CENTER), body_color)
+        self.positions = [(GRID_WIDTH_CENTER, GRID_HEIGHT_CENTER)]
         self.direction = direction
-        self.next_direction = next_direction
-        self.last = last
-        self.dead_snake = dead_snake
+        self.next_direction = None
+        self.last = None
+        self.dead_snake = None
 
     def get_head_position(self):
         """Get head position."""
@@ -101,26 +103,15 @@ class Snake(GameObject):
 
     def get_field_ahead(self):
         """Get position to be stepped into."""
+        head_x, head_y = self.get_head_position()
         if self.direction == RIGHT:
-            return (
-                (self.positions[0][0] + GRID_SIZE) % SCREEN_WIDTH,
-                self.positions[0][1],
-            )
-        elif self.direction == DOWN:
-            return (
-                self.positions[0][0],
-                (self.positions[0][1] + GRID_SIZE) % SCREEN_HEIGHT,
-            )
-        elif self.direction == LEFT:
-            return (
-                (self.positions[0][0] - GRID_SIZE) % SCREEN_WIDTH,
-                self.positions[0][1],
-            )
-        elif self.direction == UP:
-            return (
-                self.positions[0][0],
-                (self.positions[0][1] - GRID_SIZE) % SCREEN_HEIGHT,
-            )
+            return (head_x + GRID_SIZE) % SCREEN_WIDTH, head_y
+        if self.direction == DOWN:
+            return head_x, (head_y + GRID_SIZE) % SCREEN_HEIGHT,
+        if self.direction == LEFT:
+            return (head_x - GRID_SIZE) % SCREEN_WIDTH, head_y
+        if self.direction == UP:
+            return head_x, (head_y - GRID_SIZE) % SCREEN_HEIGHT
 
     def update_direction(self):
         """Update direction."""
@@ -131,13 +122,8 @@ class Snake(GameObject):
     def move(self, length_increase=False):
         """Update structure accordingly to the one cell move."""
         new_head = self.get_field_ahead()
-        new_positions = [new_head]
-        new_positions.extend(self.positions)
-        self.positions = new_positions
-        if not length_increase:
-            self.last = self.positions.pop()
-        else:
-            self.last = None
+        self.positions.insert(0, new_head)
+        self.last = None if length_increase else self.positions.pop()
 
     def draw(self):
         """Draw he snake."""
@@ -165,10 +151,9 @@ class Snake(GameObject):
 
     def reset(self):
         """Kill the snake and create another."""
-        self.length = 1
         self.dead_snake = self.positions
         self.positions = [(GRID_WIDTH_CENTER, GRID_HEIGHT_CENTER)]
-        self.direction = RIGHT
+        self.direction = choice([RIGHT, DOWN, LEFT, UP])
         self.next_direction = None
         self.last = None
 
@@ -205,7 +190,7 @@ def main():
         if eat_apple:
             snake.move(length_increase=True)
             forbidden_cells = snake.positions + [apple.position]
-            apple = Apple(forbidden_cells=forbidden_cells)
+            apple.reset(forbidden_cells=forbidden_cells)
         elif self_crash:
             snake.reset()
         else:
