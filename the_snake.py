@@ -43,11 +43,11 @@ class GameObject:
 
     def draw(self):
         """Draw the game object, must be implemented in child classes."""
-        raise NotImplementedError('The method has to be implemented in a sub-class')
-    
+        raise NotImplementedError('Method has to be implemented in sub-class')
+
     def reset(self):
         """Delete the existing object and create a new one."""
-        raise NotImplementedError('The method has to be implemented in a sub-class')
+        raise NotImplementedError('Method has to be implemented in sub-class')
 
 
 class Apple(GameObject):
@@ -150,6 +150,7 @@ class Snake(GameObject):
         self.draw_reset()
 
     def draw_reset(self):
+        """Fill entire filed with background color."""
         field = pg.Rect((0, 0), (SCREEN_WIDTH, SCREEN_HEIGHT))
         pg.draw.rect(screen, BOARD_BACKGROUND_COLOR, field)
 
