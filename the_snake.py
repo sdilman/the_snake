@@ -47,19 +47,26 @@ class GameObject:
 
 
 class Apple(GameObject):
-    """Apple"""
+    """Game class Apple."""
 
-    def __init__(self, body_color=APPLE_COLOR):
+    def __init__(self, body_color=APPLE_COLOR, forbidden_cells=[]):
         """Create Apple object using input parameters."""
+        self.forbidden_cells = forbidden_cells
         _position = self.randomize_position()
         super().__init__(_position, body_color)
 
     def randomize_position(self):
         """Return random position on the field for apple."""
-        return (
+        cell_candidate = (
             randint(0, GRID_WIDTH - 1) * GRID_SIZE,
             randint(0, GRID_HEIGHT - 1) * GRID_SIZE
         )
+        while cell_candidate in self.forbidden_cells:
+            cell_candidate = (
+                randint(0, GRID_WIDTH - 1) * GRID_SIZE,
+                randint(0, GRID_HEIGHT - 1) * GRID_SIZE
+            )
+        return cell_candidate
 
     def draw(self):
         """Draw apple on the field."""
@@ -69,7 +76,7 @@ class Apple(GameObject):
 
 
 class Snake(GameObject):
-    """Snake."""
+    """Game class Snake."""
 
     def __init__(self,
                  length=1,
@@ -197,7 +204,8 @@ def main():
         self_crash = (snake.get_field_ahead() in snake.positions)
         if eat_apple:
             snake.move(length_increase=True)
-            apple = Apple()
+            forbidden_cells = snake.positions + [apple.position]
+            apple = Apple(forbidden_cells=forbidden_cells)
         elif self_crash:
             snake.reset()
         else:
